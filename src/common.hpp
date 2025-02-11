@@ -68,3 +68,12 @@ static void fd_set_nb(int fd) {
     abort();
   }
 }
+
+static bool read_u32(const uint8_t *&begin, const uint8_t *end, uint32_t &out) {
+  if (end - begin < 4) {
+    return false;
+  }
+  memcpy(&out, begin, 4);
+  begin += 4;
+  return true;
+}

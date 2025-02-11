@@ -14,33 +14,22 @@
 #include "common.hpp"
 #include "connection.hpp"
 
-static void do_something(int connfd) {
-  while (true) {
-    uint32_t len = 0;
-    if (!read_all(connfd, (char *)&len, sizeof(len))) {
-      break;
-    }
-    len = ntohl(len);
-
-    if (len > 4096) {
-      break;
-    }
-
-    char *buf = new char[len];
-    if (!read_all(connfd, buf, len)) {
-      delete[] buf;
-      break;
-    }
-
-    uint32_t len_net = htonl(len);
-    if (!write_all(connfd, (char *)&len_net, sizeof(len_net)) ||
-        !write_all(connfd, buf, len)) {
-      delete[] buf;
-      break;
-    }
-
-    delete[] buf;
+static std::unique_ptr<Connection> handle_accept(int fd) {
+  struct sockaddr_in client_addr = {};
+  socklen_t socklen = sizeof(client_addr);
+  int connfd = accept(fd, (struct sockaddr *)&client_addr, &socklen);
+  if (connfd < 0) {
+    LOG(ERROR) << "accept failed: " << strerror(errno) << "\n";
+    return nullptr;
   }
+  uint32_t ip = client_addr.sin_addr.s_addr;
+  LOG(INFO) << "Accept connection from " << inet_ntoa({ip}) << ":"
+            << ntohs(client_addr.sin_port) << std::endl;
+
+  fd_set_nb(connfd);
+  auto conn = std::make_unique<Connection>(connfd);
+
+  return conn;
 }
 
 int main(int argc, char *argv[]) {
