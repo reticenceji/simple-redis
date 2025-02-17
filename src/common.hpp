@@ -1,6 +1,5 @@
 #pragma once
 
-#include <asm-generic/errno-base.h>
 #include <assert.h>
 #include <cstddef>
 #include <fcntl.h>
