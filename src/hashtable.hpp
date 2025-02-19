@@ -43,6 +43,9 @@ public:
   }
 
   HashNode **lookup(HashNode *key, bool (*eq)(HashNode *, HashNode *)) {
+    if (empty()) {
+      return nullptr;
+    }
     size_t pos = key->hcode & mask_;
 
     for (HashNode **from = &tab_[pos]; *from != nullptr;
@@ -126,7 +129,7 @@ public:
       nwork++;
     }
 
-    if (older_.size() == 0 && older_.empty()) {
+    if (older_.size() == 0 && !older_.empty()) {
       older_ = HashTable();
     }
   }

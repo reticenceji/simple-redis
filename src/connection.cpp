@@ -69,7 +69,7 @@ bool Connection::try_one_request() {
     return false;
   }
   Response resp;
-  do_request(cmd, resp);
+  do_request(std::move(cmd), resp);
   make_response(resp, outgoing_);
 
   incoming_.erase(incoming_.begin(), incoming_.begin() + len);

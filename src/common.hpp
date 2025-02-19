@@ -76,3 +76,5 @@ static bool read_u32(const uint8_t *&begin, const uint8_t *end, uint32_t &out) {
   begin += 4;
   return true;
 }
+
+#define container_of(ptr, T, member) ((T *)((char *)ptr - offsetof(T, member)))
