@@ -68,9 +68,9 @@ bool Connection::try_one_request() {
     state_ = ConnectionState::STATE_END;
     return false;
   }
-  Response resp;
+  Response resp(outgoing_);
   do_request(std::move(cmd), resp);
-  make_response(resp, outgoing_);
+  resp.build();
 
   incoming_.erase(incoming_.begin(), incoming_.begin() + len);
   return true;

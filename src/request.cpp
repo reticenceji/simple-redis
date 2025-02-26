@@ -60,12 +60,11 @@ void do_get(const std::vector<std::string> &&cmd, Response &out) {
   // hashtable lookup
   HashNode *node = g_data.db.lookup(&entry.node, entry_eq);
   if (!node) {
-    out.status = ResponseStatus::NOT_FOUND;
-    return;
+    return out.out_nil();
   }
   {
     const std::string &value = container_of(node, Entry, node)->value;
-    out.data.assign(value.begin(), value.end());
+    return out.out_str(value);
   }
 }
 
@@ -84,6 +83,7 @@ void do_set(std::vector<std::string> &&cmd, Response &out) {
     ent->value = std::move(cmd[2]);
     g_data.db.insert(&ent->node);
   }
+  return out.out_nil();
 }
 
 void do_del(const std::vector<std::string> &&cmd, Response &out) {
@@ -93,7 +93,22 @@ void do_del(const std::vector<std::string> &&cmd, Response &out) {
   HashNode *node = g_data.db.remove(&entry.node, entry_eq);
   if (node) {
     delete container_of(node, Entry, node);
+    out.out_int(1);
+  } else {
+    out.out_int(0);
   }
+}
+
+void do_keys(const std::vector<std::string> &&cmd, Response &out) {
+  auto callback_keys = [](HashNode *node, void *arg) {
+    Response &out = *(Response *)arg;
+    const std::string &key = container_of(node, Entry, node)->key;
+    out.out_str(key);
+    return true;
+  };
+
+  out.out_arrary(g_data.db.size());
+  g_data.db.foreach (callback_keys, reinterpret_cast<void *>(&out));
 }
 
 void do_request(std::vector<std::string> &&cmd, Response &out) {
@@ -103,16 +118,9 @@ void do_request(std::vector<std::string> &&cmd, Response &out) {
     do_set(std::move(cmd), out);
   } else if (cmd.size() == 2 && cmd[0] == "del") {
     do_del(std::move(cmd), out);
+  } else if (cmd.size() == 1 && cmd[0] == "keys") {
+    do_keys(std::move(cmd), out);
   } else {
-    out.status = ResponseStatus::BAD_REQUEST;
+    out.out_err(ResponseErrorType::ERR_UNKNOWN, "unknown command");
   }
-}
-
-void make_response(const Response &resp, std::vector<uint8_t> &out) {
-  uint32_t resp_len = 4 + (uint32_t)resp.data.size();
-  out.insert(out.end(), reinterpret_cast<uint8_t *>(&resp_len),
-             reinterpret_cast<uint8_t *>(&resp_len) + 4);
-  out.insert(out.end(), reinterpret_cast<const uint8_t *>(&resp.status),
-             reinterpret_cast<const uint8_t *>(&resp.status) + 4);
-  out.insert(out.end(), resp.data.begin(), resp.data.end());
 }

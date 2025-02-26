@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
+#include <sys/_types/_size_t.h>
 
 struct HashNode {
   HashNode *next = nullptr;
@@ -62,6 +63,18 @@ public:
     *from = node->next;
     size_--;
     return node;
+  }
+
+  bool foreach (bool (*fn)(HashNode *node, void *arg), void *arg) {
+    if (tab_ == nullptr)
+      return true;
+    for (int i = 0; i < mask_size(); i++) {
+      for (HashNode *node = tab_[i]; node != nullptr; node = node->next) {
+        if (!fn(node, arg))
+          break;
+      }
+    }
+    return true;
   }
 
   size_t mask_size() const { return mask_ + 1; }
@@ -133,4 +146,10 @@ public:
       older_ = HashTable();
     }
   }
+
+  void foreach (bool (*fn)(HashNode *node, void *arg), void *arg) {
+    newer_.foreach (fn, arg) && older_.foreach (fn, arg);
+  }
+
+  size_t size() { return newer_.size() + older_.size(); }
 };
