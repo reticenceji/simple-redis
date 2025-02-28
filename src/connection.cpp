@@ -1,5 +1,6 @@
 #include "connection.hpp"
 #include "request.hpp"
+#include "utils.hpp"
 
 void Connection::handle_read() {
   ssize_t rv = read(fd_, rbuf_, sizeof(rbuf_));
@@ -82,4 +83,10 @@ void Connection::conn_put(std::vector<Connection *> &fd2conn,
     fd2conn.resize(conn->fd_ + 1);
   }
   fd2conn[conn->fd_] = conn;
+}
+
+void Connection::update_timer(DList *timeout_node_header) {
+  last_active_ms_ = get_monotonic_msec();
+  timeout_node.detach();
+  timeout_node_header->insert_before(&timeout_node);
 }

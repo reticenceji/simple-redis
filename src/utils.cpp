@@ -1,18 +1,12 @@
-#pragma once
+#include "utils.hpp"
 
-#include <assert.h>
-#include <cstddef>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <unistd.h>
+uint64_t get_monotonic_msec() {
+  struct timespec tv = {0, 0};
+  clock_gettime(CLOCK_MONOTONIC, &tv);
+  return uint64_t(tv.tv_sec) * 1000 + tv.tv_nsec / 1000 / 1000;
+}
 
-#include <cerrno>
-#include <cstdlib>
-#include <cstring>
-
-#include "aixlog.hpp"
-
-static bool read_all(int fd, char *buf, size_t len) {
+bool read_all(int fd, char *buf, size_t len) {
   ssize_t n = 0;
   while (n < len) {
     ssize_t rv = read(fd, buf, len - n);
@@ -30,7 +24,7 @@ static bool read_all(int fd, char *buf, size_t len) {
   return true;
 }
 
-static bool write_all(int fd, const char *buf, size_t len) {
+bool write_all(int fd, const char *buf, size_t len) {
   ssize_t n = 0;
   while (n < len) {
     ssize_t rv = write(fd, buf, len - n);
@@ -48,12 +42,7 @@ static bool write_all(int fd, const char *buf, size_t len) {
   return true;
 }
 
-/**
- * @brief set fd to non-blocking mode
- *
- * @param fd
- */
-static void fd_set_nb(int fd) {
+void fd_set_nb(int fd) {
   errno = 0;
   int flags = fcntl(fd, F_GETFL, 0);
   if (errno != 0) {
@@ -68,7 +57,7 @@ static void fd_set_nb(int fd) {
   }
 }
 
-static bool read_u32(const uint8_t *&begin, const uint8_t *end, uint32_t &out) {
+bool read_u32(const uint8_t *&begin, const uint8_t *end, uint32_t &out) {
   if (end - begin < 4) {
     return false;
   }
@@ -76,5 +65,3 @@ static bool read_u32(const uint8_t *&begin, const uint8_t *end, uint32_t &out) {
   begin += 4;
   return true;
 }
-
-#define container_of(ptr, T, member) ((T *)((char *)ptr - offsetof(T, member)))

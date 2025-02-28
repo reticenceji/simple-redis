@@ -17,6 +17,7 @@ enum ResponseType {
 enum ResponseErrorType {
   ERR_UNKNOWN = 1,
   ERR_TOO_BIG = 2,
+  ERR_BAD_ARG = 3,
 };
 
 class Response {
